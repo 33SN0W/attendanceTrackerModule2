@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Section E Attendance</title>
+<meta name="description" content="Missed-class tracker for Section E, Module 2. Limit: 3 misses per course.">
+<meta name="theme-color" content="#3c4c42">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%234A5D51'/%3E%3Ccircle cx='32' cy='34' r='21' fill='%23ECE5CF' stroke='%231E2321' stroke-width='5'/%3E%3Cpath d='M32 34 47 22' stroke='%23C9372A' stroke-width='4.5' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='34' r='4.5' fill='%231E2321'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Big+Shoulders+Stencil:wght@800&display=swap">
+<script defer src="https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.umd.min.js"></script>
+<style>
+  :root {
+    --wall: #1f2723;
+    --enamel: #4a5d51;
+    --bay: #3b4a40;
+    --bay-2: #425348;
+    --ink: #eee8d5;
+    --ink-2: #bdc6ba;
+    --face-print: #27261f;
+    --amber: #f3a63a;
+    --green: #a6f07a;
+    --red: #c9372a;
+    --hazard: #f2c230;
+    --tape-ok: #18191a;
+    --tape-warn: #e5bc2b;
+    --tape-bad: #ae241b;
+    --f-ui: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+    --f-stencil: 'Big Shoulders Stencil', 'Barlow Condensed', Impact, sans-serif;
+    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 28px 20px 40px;
+    background: var(--wall) radial-gradient(120% 70% at 50% 0%, #2c3731 0%, #1b221e 75%);
+    color: var(--ink);
+    font: 400 17px/1.4 var(--f-ui);
+  }
+
+  /* ---------- the machine plate ---------- */
+  .panel {
+    position: relative;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 42px 46px 30px;
+    border-radius: 16px;
+    background-color: var(--enamel);
+    background-image:
+      var(--noise),
+      radial-gradient(140% 90% at 25% 0%, rgba(255,255,255,.08), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.12));
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(255,255,255,.15),
+      inset 0 -2px 0 rgba(0,0,0,.25),
+      0 30px 60px -20px rgba(0,0,0,.7);
+  }
+
+  .screw {
+    position: absolute;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e6eae5 0, #a7afa9 30%, #5c6560 72%, #373e3a 100%);
+    box-shadow: 0 1px 1px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.35);
+  }
+  .screw::after {
+    content: '';
+    position: absolute;
+    left: 2px; right: 2px; top: 7px; height: 2px;
+    border-radius: 1px;
+    background: #2a2f2c;
+    box-shadow: 0 1px 0 rgba(255,255,255,.35);
+    transform: rotate(var(--r));
+  }
+  .screw.tl { top: 14px; left: 14px; --r: 24deg; }
+  .screw.tr { top: 14px; right: 14px; --r: -38deg; }
+  .screw.bl { bottom: 14px; left: 14px; --r: 71deg; }
+  .screw.br { bottom: 14px; right: 14px; --r: -12deg; }
+
+  /* ---------- header ---------- */
+  .head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 20px 40px;
+    padding: 4px 4px 28px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid rgba(0,0,0,.3);
+    box-shadow: 0 1px 0 rgba(255,255,255,.09);
+  }
+  .ident { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+  h1 {
+    margin: 0;
+    font: 800 clamp(64px, 10.5vw, 120px)/.8 var(--f-stencil);
+    letter-spacing: .005em;
+    color: var(--ink);
+    text-shadow: 0 2px 0 rgba(0,0,0,.2);
+  }
+  .meta {
+    display: grid;
+    justify-items: end;
+    gap: 12px;
+    max-width: 46ch;
+    text-align: right;
+  }
+  .today { margin: 0; font-size: 19px; font-weight: 500; line-height: 1.35; }
+  .today .nw { white-space: nowrap; }
+  .total { margin: 0; font-size: 17px; color: var(--ink-2); }
+  .total output { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Dymo tape ---------- */
+  .tape {
+    display: inline-block;
+    margin: 0;
+    padding: 5px 12px 4px;
+    border-radius: 2px;
+    font: 600 15px/1.2 var(--f-ui);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background-color: var(--tape-ok);
+    background-image: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 45%, rgba(0,0,0,.18));
+    color: #f6f3ea;
+    text-shadow: 0 1px 0 rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,.5);
+    transform: rotate(-.8deg);
+  }
+  .tape[data-tone="warn"] { background-color: var(--tape-warn); color: #1b1a14; text-shadow: 0 1px 0 rgba(255,255,255,.45); }
+  .tape[data-tone="bad"] { background-color: var(--tape-bad); }
+  .tape.big { font-size: 18px; padding: 6px 14px 5px; transform: rotate(-1.4deg); }
+
+  /* ---------- instrument bays ---------- */
+  .rack {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .unit {
+    --dial: 200px;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "top top"
+      "dial dial"
+      "plate plate"
+      "lamps tape"
+      "ctl ctl";
+    grid-template-rows: auto auto 1fr auto auto;
+    column-gap: 12px;
+    padding: 22px 20px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--bay), var(--bay-2));
+    box-shadow:
+      inset 0 3px 6px rgba(0,0,0,.45),
+      inset 0 0 0 1px rgba(0,0,0,.3),
+      0 1px 0 rgba(255,255,255,.09);
+    overflow: hidden;
+  }
+  .unit[data-state="over"] {
+    box-shadow:
+      inset 0 0 0 2px rgba(230,80,62,.8),
+      inset 0 3px 6px rgba(0,0,0,.45),
+      0 1px 0 rgba(255,255,255,.09);
+  }
+
+  .hazard {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 9px;
+    background: repeating-linear-gradient(-45deg, var(--hazard) 0 9px, #161816 9px 18px);
+    transform-origin: left center;
+  }
+
+  .top {
+    grid-area: top;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 26px;
+  }
+  .code { font: 800 23px/1 var(--f-stencil); color: var(--ink); opacity: .9; letter-spacing: .02em; }
+  .when-today { display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 500; color: var(--ink); }
+  .pilot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff2d6, var(--amber) 55%);
+    box-shadow: 0 0 0 2px #232825, 0 0 10px 2px rgba(243,166,58,.6);
+  }
+
+  .dial-wrap {
+    grid-area: dial;
+    justify-self: center;
+    position: relative;
+    width: var(--dial);
+    aspect-ratio: 1;
+    margin: 8px 0 16px;
+  }
+  .dial { display: block; width: 100%; height: 100%; overflow: visible; }
+  .band { fill: none; stroke-width: 9; }
+  .band.warn { stroke: #e3a13a; }
+  .band.over { stroke: #c9372a; }
+  .tk { stroke: var(--face-print); stroke-width: 1.2; }
+  .tk.major { stroke-width: 2.6; }
+  .num { font: 600 18px var(--f-ui); fill: var(--face-print); }
+  .legend { font: 600 10.5px var(--f-ui); letter-spacing: .22em; fill: #736d5b; }
+  .needle {
+    transform-box: view-box;
+    transform-origin: 100px 100px;
+    filter: drop-shadow(1.5px 2.5px 1.2px rgba(0,0,0,.35));
+  }
+
+  .counter {
+    position: absolute;
+    left: 50%; top: 65%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--dial) * .02);
+  }
+  .drum {
+    position: relative;
+    display: block;
+    height: 1.1em;
+    overflow: hidden;
+    padding: 0 .3em;
+    border-radius: 3px;
+    font: 700 calc(var(--dial) * .115)/1.1 var(--f-ui);
+    font-variant-numeric: tabular-nums;
+    color: #f4f0e2;
+    background: #141716;
+    box-shadow: 0 0 0 2px #9b957e, 0 1px 0 2px rgba(255,255,255,.45);
+  }
+  .drum::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.6), transparent 32%, transparent 68%, rgba(0,0,0,.6));
+    pointer-events: none;
+  }
+  .strip { display: block; }
+  .strip span { display: block; height: 1.1em; text-align: center; }
+  .of { font: 600 calc(var(--dial) * .08)/1 var(--f-ui); color: var(--face-print); }
+
+  .plate { grid-area: plate; min-width: 0; }
+  .name { margin: 0 0 5px; font-size: 23px; font-weight: 600; line-height: 1.12; color: var(--ink); }
+  .who, .when { margin: 0; font-size: 15.5px; line-height: 1.35; color: var(--ink-2); }
+
+  .lamps { grid-area: lamps; display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-left: 3px; }
+  .lamp {
+    position: relative;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #45534b, #1e2621 70%);
+    box-shadow: 0 0 0 3px #1b1f1d, 0 0 0 4px rgba(255,255,255,.08), inset 0 2px 3px rgba(0,0,0,.6);
+  }
+  .lamp .lit {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #f3ffe8 0, var(--green) 35%, #4dab29 78%);
+    box-shadow: 0 0 12px 3px rgba(166,240,122,.5);
+  }
+  .lamp.red .lit {
+    background: radial-gradient(circle at 40% 35%, #ffe4dc 0, #ff5b45 35%, #ad2519 78%);
+    box-shadow: 0 0 12px 3px rgba(255,91,69,.55);
+  }
+
+  .tape-wrap { grid-area: tape; justify-self: end; align-self: center; margin-top: 18px; }
+
+  .controls { grid-area: ctl; display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; margin-top: 20px; }
+
+  /* ---------- push buttons ---------- */
+  .btn {
+    position: relative;
+    min-height: 48px;
+    padding: 11px 14px;
+    border: 0;
+    border-radius: 8px;
+    font: 600 18px/1 var(--f-ui);
+    letter-spacing: .01em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .06s ease-out, box-shadow .06s ease-out, opacity .2s;
+  }
+  .btn-miss {
+    color: #fff;
+    background: linear-gradient(180deg, #e04a3a, #b52e20);
+    text-shadow: 0 1px 0 rgba(0,0,0,.35);
+    box-shadow: 0 4px 0 #6c170f, 0 7px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  .btn-undo, .btn-hold {
+    color: #dfe2d6;
+    background: linear-gradient(180deg, #303733, #1d2220);
+    box-shadow: 0 4px 0 #0b0d0c, 0 7px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .btn:active:not(:disabled), .btn-hold.is-holding {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #0b0d0c, 0 2px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .btn-miss:active:not(:disabled) {
+    box-shadow: 0 1px 0 #6c170f, 0 2px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--hazard); outline-offset: 3px; }
+
+  .btn-hold {
+    overflow: hidden;
+    padding: 11px 20px;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+  }
+  .btn-hold .fill {
+    position: absolute; inset: 0;
+    background: var(--red);
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+  .btn-hold .lbl { position: relative; }
+
+  .foot {
+    margin: 26px 4px 0;
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1000px) {
+    .rack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .head { grid-template-columns: 1fr; }
+    .meta { justify-items: start; text-align: left; }
+  }
+  @media (max-width: 620px) {
+    body { padding: 0; }
+    .panel { border-radius: 0; padding: 34px 16px 24px; min-height: 100vh; }
+    .screw { width: 12px; height: 12px; }
+    .screw::after { top: 5px; }
+    .screw.tl, .screw.tr { top: 10px; }
+    .screw.bl, .screw.br { bottom: 10px; }
+    .screw.tl, .screw.bl { left: 10px; }
+    .screw.tr, .screw.br { right: 10px; }
+    .head { padding: 0 0 22px; margin-bottom: 20px; }
+    .rack { grid-template-columns: 1fr; gap: 14px; }
+    .unit {
+      --dial: 132px;
+      grid-template-columns: var(--dial) 1fr;
+      grid-template-areas:
+        "top top"
+        "dial plate"
+        "lamps tape"
+        "ctl ctl";
+      column-gap: 16px;
+      padding: 20px 16px 16px;
+    }
+    .dial-wrap { margin: 8px 0 0; align-self: start; }
+    .plate { padding-top: 10px; }
+    .name { font-size: 20px; }
+    .lamps { justify-self: center; padding-left: 0; }
+    .controls { margin-top: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- shared SVG paint for every dial -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#626a65"/>
+      <stop offset=".45" stop-color="#272c2a"/>
+      <stop offset="1" stop-color="#111413"/>
+    </linearGradient>
+    <radialGradient id="g-face" cx=".5" cy=".42" r=".62">
+      <stop offset="0" stop-color="#f6f0dd"/>
+      <stop offset=".72" stop-color="#e8e0c7"/>
+      <stop offset="1" stop-color="#cdc2a1"/>
+    </radialGradient>
+    <linearGradient id="g-needle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e5503e"/>
+      <stop offset=".5" stop-color="#e5503e"/>
+      <stop offset=".5" stop-color="#a82416"/>
+      <stop offset="1" stop-color="#a82416"/>
+    </linearGradient>
+    <radialGradient id="g-hub" cx=".38" cy=".34" r=".7">
+      <stop offset="0" stop-color="#959d98"/>
+      <stop offset=".5" stop-color="#2d3330"/>
+      <stop offset="1" stop-color="#101312"/>
+    </radialGradient>
+    <linearGradient id="g-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<main class="panel">
+  <span class="screw tl" aria-hidden="true"></span>
+  <span class="screw tr" aria-hidden="true"></span>
+  <span class="screw bl" aria-hidden="true"></span>
+  <span class="screw br" aria-hidden="true"></span>
+
+  <header class="head">
+    <div class="ident">
+      <h1>Section E</h1>
+      <p class="tape big"><span id="dymo">Module 2 attendance</span></p>
+    </div>
+    <div class="meta">
+      <p class="today" id="today"></p>
+      <p class="total">Total missed: <output id="total">0</output> of <span id="allowance">18</span></p>
+      <button type="button" class="btn btn-hold" id="reset" aria-describedby="reset-hint">
+        <span class="fill" aria-hidden="true"></span>
+        <span class="lbl" id="reset-lbl">Hold to reset all</span>
+      </button>
+      <span class="sr-only" id="reset-hint">Press and hold to set every course back to zero misses.</span>
+    </div>
+  </header>
+
+  <section class="rack" id="rack" aria-label="Courses"></section>
+
+  <p class="foot" id="foot"></p>
+</main>
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------------------------------------------------------------
+     Section E, Module 2: decoded from the colour-coded timetable.
+     Days: 0 Sun … 6 Sat. Times are 24h start times.
+     --------------------------------------------------------------- */
+  const COURSES = [
+    { id: 'sdb',  code: 'SDB',     name: 'Sustainable Development for Business',
+      prof: 'Prof. Disha Sharma',                              room: 'room 208',
+      slots: [[1, '10:40'], [2, '12:20']] },
+    { id: 'mwb',  code: 'MWB',     name: 'Managing Workplace Behaviour',
+      prof: 'Prof. D.K. Srivastava',                           room: 'room 208',
+      slots: [[1, '12:20'], [2, '10:40'], [6, '14:00']] },
+    { id: 'b2b',  code: 'B2B',     name: 'B2B Marketing',
+      prof: 'Prof. Neeraj Pandey',                             room: 'room 208',
+      slots: [[2, '18:00'], [2, '19:40']] },
+    { id: 'scm',  code: 'SCM',     name: 'Supply Chain Management',
+      prof: 'Prof. Rakesh Raut / Prof. Ravindra Gokhale',      room: 'room 405',
+      slots: [[3, '12:20'], [4, '10:40']] },
+    { id: 'aiml', code: 'AI & ML', name: 'Business Applications of AI & ML Techniques',
+      prof: 'Prof. J. Rambabu',                                room: 'room 208',
+      slots: [[3, '15:40'], [4, '15:40']] },
+    { id: 'pm',   code: 'PM',      name: 'Project Management',
+      prof: 'Prof. B. Koteswararao Naik',                      room: 'the auditorium',
+      slots: [[3, '18:00'], [3, '19:40']] },
+  ];
+
+  const LIMIT = 3;          // max misses allowed per course
+  const CAP = 9;            // counter drum shows 0–9
+  const HOLD_MS = 1200;     // press-and-hold time for reset
+  const KEY = 'attendance:section-e:module-2:v1';
+  const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  /* ---------- anime.js handle (page still works if the CDN fails) ---------- */
+  let A = null, hasA = false, motion = false;
+  const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function bindAnime() {
+    A = window.anime && typeof window.anime.animate === 'function' ? window.anime : null;
+    hasA = !!A;
+    motion = hasA && !reduceMQ.matches;
+  }
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+  /* ---------- storage ---------- */
+  let storageOK = true;
+  function blankState() { return Object.fromEntries(COURSES.map(c => [c.id, 0])); }
+  function load() {
+    const out = blankState();
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return out;
+      const misses = (JSON.parse(raw) || {}).misses || {};
+      COURSES.forEach(c => {
+        const n = Number(misses[c.id]);
+        out[c.id] = Number.isFinite(n) ? Math.max(0, Math.min(CAP, Math.round(n))) : 0;
+      });
+    } catch (e) { /* corrupted or blocked: start clean */ }
+    return out;
+  }
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ v: 1, misses: state, savedAt: new Date().toISOString() }));
+      storageOK = true;
+    } catch (e) {
+      storageOK = false;
+    }
+    renderFoot();
+  }
+  function probeStorage() {
+    try { localStorage.setItem(KEY + ':probe', '1'); localStorage.removeItem(KEY + ':probe'); }
+    catch (e) { storageOK = false; }
+  }
+
+  let state = load();
+  const totalMissed = () => COURSES.reduce((s, c) => s + state[c.id], 0);
+
+  /* ---------- formatting ---------- */
+  function fmt(t) {
+    let [h, m] = t.split(':').map(Number);
+    const ap = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2, '0')} ${ap}`;
+  }
+  function whenText(c) {
+    const groups = [];
+    c.slots.forEach(([d, t]) => {
+      let g = groups.find(x => x.d === d);
+      if (!g) groups.push(g = { d, ts: [] });
+      g.ts.push(fmt(t));
+    });
+    return groups.map(g => `${DAY_SHORT[g.d]} ${g.ts.join(' & ')}`).join(', ');
+  }
+  function status(n) {
+    if (n > LIMIT) return { state: 'over', tone: 'bad', text: `Over limit by ${n - LIMIT}` };
+    if (n === LIMIT) return { state: 'limit', tone: 'bad', text: 'No misses left' };
+    const left = LIMIT - n;
+    return { state: left === 1 ? 'warn' : 'ok', tone: left === 1 ? 'warn' : 'ok', text: `${left} ${left === 1 ? 'miss' : 'misses'} left` };
+  }
+
+  /* ---------- dial geometry ---------- */
+  // Scale runs 0 → 4 over a 270° sweep; 3 is the limit, 3–4 is the red "over" zone.
+  const ANG = v => -135 + v * 67.5;
+  const needleAngle = n => n <= LIMIT ? ANG(n) : ANG(Math.min(3.35 + (n - LIMIT) * 0.12, 3.85));
+  const pt = (a, r) => {
+    const t = a * Math.PI / 180;
+    return [100 + r * Math.sin(t), 100 - r * Math.cos(t)];
+  };
+  const arc = (a1, a2, r) => {
+    const [x1, y1] = pt(a1, r), [x2, y2] = pt(a2, r);
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  };
+
+  function dialSVG(id) {
+    let ticks = '';
+    for (let i = 0; i <= 16; i++) {
+      const v = i / 4, major = i % 4 === 0;
+      const [x1, y1] = pt(ANG(v), 81);
+      const [x2, y2] = pt(ANG(v), major ? 67 : 73);
+      ticks += `<line class="tk${major ? ' major' : ''}" x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;
+    }
+    let nums = '';
+    for (let v = 0; v <= LIMIT; v++) {
+      const [x, y] = pt(ANG(v), 55);
+      nums += `<text class="num" x="${x.toFixed(2)}" y="${y.toFixed(2)}" text-anchor="middle" dominant-baseline="central">${v}</text>`;
+    }
+    return `<svg class="dial" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+      <circle cx="100" cy="100" r="98" fill="url(#g-bezel)"/>
+      <circle cx="100" cy="100" r="90" fill="#0e1110"/>
+      <circle cx="100" cy="100" r="87" fill="url(#g-face)"/>
+      <path class="band warn" d="${arc(ANG(2), ANG(3), 76.5)}"/>
+      <path class="band over" d="${arc(ANG(3), ANG(4), 76.5)}"/>
+      ${ticks}${nums}
+      <text class="legend" x="100" y="174" text-anchor="middle">MISSES</text>
+      <g class="needle" data-id="${id}" style="transform: rotate(${ANG(0)}deg)">
+        <path d="M100 25 L104.2 100 L100 124 L95.8 100 Z" fill="url(#g-needle)"/>
+      </g>
+      <circle cx="100" cy="100" r="9.5" fill="url(#g-hub)"/>
+      <circle cx="100" cy="100" r="2.6" fill="#0c0e0d"/>
+      <ellipse cx="80" cy="58" rx="64" ry="36" fill="url(#g-glass)" transform="rotate(-26 80 58)"/>
+    </svg>`;
+  }
+
+  /* ---------- build the rack ---------- */
+  const rack = $('#rack');
+  const units = {};
+  const digits = Array.from({ length: CAP + 1 }, (_, i) => `<span>${i}</span>`).join('');
+
+  COURSES.forEach(c => {
+    const el = document.createElement('article');
+    el.className = 'unit';
+    el.dataset.id = c.id;
+    el.setAttribute('aria-labelledby', `n-${c.id}`);
+    el.innerHTML = `
+      <div class="hazard" aria-hidden="true" style="transform: scaleX(0)"></div>
+      <div class="top">
+        <span class="code" aria-hidden="true">${esc(c.code)}</span>
+        <span class="when-today" hidden><span class="pilot" aria-hidden="true"></span><span class="wt"></span></span>
+      </div>
+      <div class="dial-wrap" role="img">
+        ${dialSVG(c.id)}
+        <div class="counter" aria-hidden="true">
+          <span class="drum"><span class="strip" data-id="${c.id}" style="transform: translateY(0%)">${digits}</span></span>
+          <span class="of">/${LIMIT}</span>
+        </div>
+      </div>
+      <div class="plate">
+        <h2 class="name" id="n-${c.id}">${esc(c.name)}</h2>
+        <p class="who">${esc(c.prof)}, ${esc(c.room)}</p>
+        <p class="when">${esc(whenText(c))}</p>
+      </div>
+      <div class="lamps" aria-hidden="true">
+        ${'<span class="lamp"><span class="lit" style="opacity:0"></span></span>'.repeat(LIMIT)}
+      </div>
+      <div class="tape-wrap"><p class="tape" data-tone="ok"><span class="tape-text"></span></p></div>
+      <div class="controls">
+        <button type="button" class="btn btn-undo" data-act="remove" aria-label="Remove miss, ${esc(c.name)}">Remove miss</button>
+        <button type="button" class="btn btn-miss" data-act="add" aria-label="Add miss, ${esc(c.name)}">Add miss</button>
+      </div>`;
+    rack.appendChild(el);
+    units[c.id] = {
+      el,
+      dial: $('.dial-wrap', el),
+      needle: $('.needle', el),
+      strip: $('.strip', el),
+      lamps: $$('.lamp', el),
+      tape: $('.tape', el),
+      tapeText: $('.tape-text', el),
+      hazard: $('.hazard', el),
+      today: $('.when-today', el),
+      todayText: $('.wt', el),
+      add: $('[data-act="add"]', el),
+      remove: $('[data-act="remove"]', el),
+    };
+    // text and buttons are correct immediately; the gauges power up in boot()
+    const st = status(state[c.id]);
+    units[c.id].tapeText.textContent = st.text;
+    units[c.id].tape.dataset.tone = st.tone;
+    units[c.id].el.dataset.state = st.state;
+  });
+
+  /* ---------- low-level setters (anime.js when present, plain styles otherwise) ---------- */
+  function put(el, props) {
+    if (hasA) { A.utils.set(el, props); return; }
+    if ('rotate' in props) el.style.transform = `rotate(${props.rotate}deg)`;
+    if ('translateY' in props) el.style.transform = `translateY(${props.translateY})`;
+    if ('scaleX' in props) el.style.transform = `scaleX(${props.scaleX})`;
+    if ('opacity' in props) el.style.opacity = props.opacity;
+  }
+  function setText(el, text, animate) {
+    if (el.textContent === text) return;
+    if (animate && motion && typeof A.scrambleText === 'function') {
+      A.animate(el, { innerHTML: A.scrambleText({ text, chars: 'A-Z0-9', revealRate: 90, settleDuration: 220 }) });
+    } else {
+      el.textContent = text;
+    }
+  }
+  // evenly timed keyframes: [a, b, c] over `total` ms
+  const kf = (values, total) => values.map(to => ({ to, duration: total / values.length }));
+
+  /* ---------- update one instrument ---------- */
+  function update(id, prev, animate) {
+    const n = state[id];
+    const u = units[id];
+    const st = status(n);
+    const anim = animate && motion;
+
+    u.el.dataset.state = st.state;
+    u.dial.setAttribute('aria-label', `${n} of ${LIMIT} misses used`);
+    u.remove.disabled = n === 0;
+    u.add.disabled = n >= CAP;
+
+    // Dymo tape: re-stick with a new message
+    const toneChanged = u.tape.dataset.tone !== st.tone;
+    u.tape.dataset.tone = st.tone;
+    setText(u.tapeText, st.text, animate);
+    if (anim && toneChanged) {
+      A.animate(u.tape, { rotate: [-5, -0.8], scale: [1.08, 1], ease: A.spring({ bounce: 0.5, duration: 480 }) });
+    }
+
+    // needle
+    const ang = needleAngle(n);
+    if (!anim) put(u.needle, { rotate: ang });
+    else if (n > LIMIT && n > prev) {
+      // pinned in the red: hit the stop and rattle
+      A.animate(u.needle, { rotate: [
+        { to: ang + 10, duration: 200, ease: 'out(3)' },
+        { to: ang - 5, duration: 110, ease: 'inOut(2)' },
+        { to: ang + 3, duration: 90, ease: 'inOut(2)' },
+        { to: ang - 1.5, duration: 80, ease: 'inOut(2)' },
+        { to: ang, duration: 100, ease: 'out(2)' },
+      ] });
+    } else {
+      A.animate(u.needle, { rotate: ang, ease: A.spring({ bounce: 0.45, duration: 560 }) });
+    }
+
+    // counter drum
+    const y = `${-Math.min(n, CAP) * 10}%`;
+    if (anim) A.animate(u.strip, { translateY: y, duration: 460, ease: 'outBack(1.5)' });
+    else put(u.strip, { translateY: y });
+
+    // pilot lamps: lit = misses still available; all red when over the limit
+    const over = n > LIMIT;
+    const left = Math.max(0, LIMIT - n);
+    u.lamps.forEach((lamp, i) => {
+      const lit = over || i < left;
+      const wasLit = lamp.dataset.lit === '1';
+      const wasRed = lamp.classList.contains('red');
+      lamp.dataset.lit = lit ? '1' : '0';
+      lamp.classList.toggle('red', over);
+      const glow = lamp.firstElementChild;
+      if (!anim) { put(glow, { opacity: lit ? 1 : 0 }); return; }
+      if (lit && (!wasLit || wasRed !== over)) {
+        A.animate(glow, { opacity: kf([0.85, 0.1, 1, 0.35, 1], 480), delay: over ? i * 70 : 0, ease: 'linear' });
+      } else if (!lit && wasLit) {
+        A.animate(glow, { opacity: kf([0.15, 0.8, 0.05, 0], 340), ease: 'linear' });
+      }
+    });
+
+    // hazard strip at the limit
+    const haz = n >= LIMIT;
+    const hadHaz = u.hazard.dataset.on === '1';
+    u.hazard.dataset.on = haz ? '1' : '0';
+    if (anim && haz !== hadHaz) {
+      A.animate(u.hazard, { scaleX: haz ? 1 : 0, duration: haz ? 520 : 280, ease: haz ? 'out(4)' : 'in(2)' });
+    } else if (!anim) {
+      put(u.hazard, { scaleX: haz ? 1 : 0 });
+    }
+
+    // knock the bay when it hits or passes the limit
+    if (anim && n > prev && n >= LIMIT) {
+      A.animate(u.el, { translateX: kf([-7, 6, -4, 3, -1, 0], 420), ease: 'inOut(2)' });
+    }
+  }
+
+  /* ---------- header readouts ---------- */
+  let shownTotal = 0;
+  const totalEl = $('#total');
+  $('#allowance').textContent = LIMIT * COURSES.length;
+  function renderTotal(animate) {
+    const t = totalMissed();
+    if (animate && motion) {
+      const o = { v: shownTotal };
+      A.animate(o, { v: t, duration: 520, ease: 'out(3)', onUpdate: () => { totalEl.textContent = Math.round(o.v); } });
+    } else {
+      totalEl.textContent = t;
+    }
+    shownTotal = t;
+  }
+
+  function renderToday() {
+    const d = new Date().getDay();
+    const items = [];
+    COURSES.forEach(c => {
+      const ts = c.slots.filter(s => s[0] === d).map(s => s[1]).sort();
+      const u = units[c.id];
+      if (ts.length) {
+        items.push({ c, ts });
+        u.today.hidden = false;
+        u.todayText.textContent = `Today ${ts.map(fmt).join(' & ')}`;
+      } else {
+        u.today.hidden = true;
+      }
+    });
+    items.sort((a, b) => a.ts[0].localeCompare(b.ts[0]));
+    $('#today').innerHTML = items.length
+      ? `${DAY_LONG[d]}: ` + items.map(({ c, ts }, i) =>
+          `<span class="nw">${esc(c.code)} at ${ts.map(fmt).join(' and ')} in ${esc(c.room.replace(/^room /, ''))}${i < items.length - 1 ? ',' : '.'}</span>`
+        ).join(' ')
+      : `${DAY_LONG[d]}: no Section E classes.`;
+  }
+
+  const foot = $('#foot');
+  function renderFoot() {
+    foot.textContent = storageOK
+      ? `You can miss up to ${LIMIT} classes per course. Counts save automatically on this device.`
+      : `You can miss up to ${LIMIT} classes per course. This browser is blocking storage, so counts will be lost when you close the page.`;
+  }
+
+  const live = $('#live');
+  function announce(msg) {
+    live.textContent = '';
+    requestAnimationFrame(() => { live.textContent = msg; });
+  }
+
+  /* ---------- add / remove ---------- */
+  rack.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.closest('.unit').dataset.id;
+    const prev = state[id];
+    const next = btn.dataset.act === 'add' ? Math.min(CAP, prev + 1) : Math.max(0, prev - 1);
+    if (next === prev) return;
+    state[id] = next;
+    save();
+    update(id, prev, true);
+    renderTotal(true);
+    const c = COURSES.find(x => x.id === id);
+    announce(`${c.name}: ${next} missed. ${status(next).text}.`);
+  });
+
+  /* ---------- hold to reset ---------- */
+  const holdBtn = $('#reset');
+  const holdFill = $('.fill', holdBtn);
+  const holdLbl = $('#reset-lbl');
+  let holding = false, holdAnim = null, holdTimer = null;
+
+  function holdStart() {
+    if (holding) return;
+    holding = true;
+    holdBtn.classList.add('is-holding');
+    if (hasA) {
+      if (holdAnim) holdAnim.pause();
+      holdAnim = A.animate(holdFill, { scaleX: 1, duration: HOLD_MS, ease: 'linear', onComplete: holdDone });
+    } else {
+      holdFill.style.transition = `transform ${HOLD_MS}ms linear`;
+      holdFill.style.transform = 'scaleX(1)';
+      holdTimer = setTimeout(holdDone, HOLD_MS);
+    }
+  }
+  function drainFill(ms) {
+    if (hasA) {
+      if (holdAnim) holdAnim.pause();
+      holdAnim = A.animate(holdFill, { scaleX: 0, duration: ms, ease: 'out(2)' });
+    } else {
+      clearTimeout(holdTimer);
+      holdFill.style.transition = `transform ${ms}ms ease-out`;
+      holdFill.style.transform = 'scaleX(0)';
+    }
+  }
+  function holdEnd() {
+    if (!holding) return;
+    holding = false;
+    holdBtn.classList.remove('is-holding');
+    drainFill(260);
+  }
+  function holdDone() {
+    holding = false;
+    holdBtn.classList.remove('is-holding');
+    const prevs = { ...state };
+    COURSES.forEach(c => { state[c.id] = 0; });
+    save();
+    COURSES.forEach((c, i) => {
+      if (motion) setTimeout(() => update(c.id, prevs[c.id], true), i * 70);
+      else update(c.id, prevs[c.id], false);
+    });
+    renderTotal(true);
+    setTimeout(() => drainFill(420), 250);
+    setText(holdLbl, 'Reset done', true);
+    setTimeout(() => setText(holdLbl, 'Hold to reset all', true), 1800);
+    announce('All courses reset to zero misses.');
+  }
+
+  holdBtn.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    try { holdBtn.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    holdStart();
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => holdBtn.addEventListener(t, holdEnd));
+  holdBtn.addEventListener('keydown', e => {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); holdStart(); }
+  });
+  holdBtn.addEventListener('keyup', e => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); holdEnd(); }
+  });
+  holdBtn.addEventListener('blur', holdEnd);
+  holdBtn.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ---------- keep tabs and days in sync ---------- */
+  window.addEventListener('storage', e => {
+    if (e.key !== KEY) return;
+    const next = load();
+    COURSES.forEach(c => {
+      if (next[c.id] !== state[c.id]) {
+        const p = state[c.id];
+        state[c.id] = next[c.id];
+        update(c.id, p, true);
+      }
+    });
+    renderTotal(true);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') renderToday();
+  });
+
+  /* ---------- power-up sequence ---------- */
+  let booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    bindAnime();
+
+    COURSES.forEach(c => update(c.id, state[c.id], false));
+    renderTotal(false);
+    if (!motion) return;
+
+    // start from a dead panel, then run the gauge self-test sweep
+    const needles = COURSES.map(c => units[c.id].needle);
+    const strips = COURSES.map(c => units[c.id].strip);
+    const litGlows = $$('.lamp[data-lit="1"] .lit', rack);
+    const hazards = $$('.hazard[data-on="1"]', rack);
+    A.utils.set(needles, { rotate: ANG(0) });
+    A.utils.set(strips, { translateY: '0%' });
+    if (litGlows.length) A.utils.set(litGlows, { opacity: 0 });
+    if (hazards.length) A.utils.set(hazards, { scaleX: 0 });
+    totalEl.textContent = 0;
+    shownTotal = 0;
+
+    const tl = A.createTimeline({ delay: 220 });
+    tl.add(needles, { rotate: ANG(4), duration: 640, ease: 'inOut(3)', delay: A.stagger(70) }, 0);
+    tl.add(needles, {
+      rotate: el => needleAngle(state[el.dataset.id]),
+      ease: A.spring({ bounce: 0.38, duration: 680 }),
+      delay: A.stagger(70),
+    }, 1050);
+    if (litGlows.length) {
+      tl.add(litGlows, { opacity: kf([0.85, 0.1, 1, 0.35, 1], 480), ease: 'linear', delay: A.stagger(40) }, 160);
+    }
+    tl.add(strips, {
+      translateY: el => `${-Math.min(state[el.dataset.id], CAP) * 10}%`,
+      duration: 620, ease: 'out(3)', delay: A.stagger(70),
+    }, 1050);
+    if (hazards.length) {
+      tl.add(hazards, { scaleX: 1, duration: 520, ease: 'out(4)', delay: A.stagger(80) }, 1500);
+    }
+    tl.call(() => renderTotal(true), 1100);
+
+    A.animate($('#dymo'), { innerHTML: A.scrambleText({ chars: 'A-Z0-9', revealRate: 32, settleDuration: 260 }), delay: 150 });
+  }
+
+  probeStorage();
+  renderToday();
+  renderFoot();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  setTimeout(boot, 3000); // safety net if the animation library never arrives
+})();
+</script>
+</body>
+</html>
