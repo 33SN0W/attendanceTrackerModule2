@@ -460,6 +460,9 @@
     { id: 'mwb',  code: 'MWB',     name: 'Managing Workplace Behaviour',
       prof: 'Prof. D.K. Srivastava',                           room: 'room 208',
       slots: [[1, '12:20'], [2, '10:40'], [6, '14:00']] },
+    { id: 'cf',   code: 'CF',      name: 'Corporate Finance',
+      prof: 'Prof. S. K. V. Srinivasan',                       room: '',
+      slots: [[1, '15:40'], [2, '15:40']] },
     { id: 'b2b',  code: 'B2B',     name: 'B2B Marketing',
       prof: 'Prof. Neeraj Pandey',                             room: 'room 208',
       slots: [[2, '18:00'], [2, '19:40']] },
@@ -618,7 +621,7 @@
       </div>
       <div class="plate">
         <h2 class="name" id="n-${c.id}">${esc(c.name)}</h2>
-        <p class="who">${esc(c.prof)}, ${esc(c.room)}</p>
+        <p class="who">${esc(c.prof)}${c.room ? ', ' + esc(c.room) : ''}</p>
         <p class="when">${esc(whenText(c))}</p>
       </div>
       <div class="lamps" aria-hidden="true">
@@ -777,7 +780,7 @@
     items.sort((a, b) => a.ts[0].localeCompare(b.ts[0]));
     $('#today').innerHTML = items.length
       ? `${DAY_LONG[d]}: ` + items.map(({ c, ts }, i) =>
-          `<span class="nw">${esc(c.code)} at ${ts.map(fmt).join(' and ')} in ${esc(c.room.replace(/^room /, ''))}${i < items.length - 1 ? ',' : '.'}</span>`
+          `<span class="nw">${esc(c.code)} at ${ts.map(fmt).join(' and ')}${c.room ? ' in ' + esc(c.room.replace(/^room /, '')) : ''}${i < items.length - 1 ? ',' : '.'}</span>`
         ).join(' ')
       : `${DAY_LONG[d]}: no Section E classes.`;
   }
